@@ -364,4 +364,30 @@ export class Group<Props extends z.ZodType<any, any, any> = typeof groupProps>
     if (props.autorouter) return false
     return true
   }
+
+  doInitialPcbPrimitiveRender(): void {
+    if (this.root?.pcbDisabled) return
+    const { db } = this.root!
+    const { _parsedProps: props } = this
+
+    const position = this._getGlobalPcbPositionBeforeLayout()
+
+    db.pcb_group.insert({
+      pcb_component_ids: [this.parent?.pcb_component_id!],
+      center: {
+        x: position.x,
+        y: position.y,
+      },
+      width: props.width ?? 0,
+      height: props.height ?? 0,
+    })
+
+    // Ensure child components receive transformed pcbX and pcbY
+    this.children.forEach((child) => {
+      if (child instanceof PrimitiveComponent) {
+        child._parsedProps.pcbX += position.x
+        child._parsedProps.pcbY += position.y
+      }
+    })
+  }
 }
